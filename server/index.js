@@ -4,6 +4,7 @@ const cors = require('cors');
 require("dotenv").config();
 const main = require("./config/db");
 const authRouter = require("./routes/authRoutes");
+const eventRouter = require("./routes/eventRoutes");
 const app = express();
 
 // app.use(cors({
@@ -19,7 +20,7 @@ app.get("/test", (req, res) => {
 });
 
 app.use("/user", authRouter);
-// app.use("/event", eventRouter);
+app.use("/event", eventRouter);
 
 async function initializeConnection() {
   try {

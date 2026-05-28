@@ -13,12 +13,12 @@ const eventSchema = new Schema(
         description: {
             type: String,
             required: true,
-            maxLength: 500
+            maxLength: 2000
         },
         content: {
             type: String,
             required: true,
-            maxLength: 500
+            maxLength: 2000
         },
         category: {
             type: String,
