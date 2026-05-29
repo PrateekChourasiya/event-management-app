@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-retro-brown text-retro-light font-sans text-base antialiased;
+    background-image: 
+      linear-gradient(rgba(33, 37, 41, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(33, 37, 41, 0.05) 1px, transparent 1px);
+    background-size: 20px 20px;
+    margin: 0;
+    min-height: 100vh;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-retro uppercase tracking-widest text-retro-light;
+  }
+}
+
+@layer components {
+  .retro-btn {
+    @apply bg-retro-accent text-white font-retro text-xs py-3 px-6 uppercase tracking-wider border-2 border-retro-light shadow-retro transition-all active:shadow-retro-hover active:translate-x-[2px] active:translate-y-[2px] hover:bg-retro-hover disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  
+  .retro-input {
+    @apply bg-white border-2 border-retro-light text-retro-light font-sans text-base p-3 focus:outline-none focus:border-retro-accent focus:ring-1 focus:ring-retro-accent transition-colors w-full placeholder-gray-400;
+  }
+
+  .retro-card {
+    @apply bg-white border-2 border-retro-light p-8 shadow-retro max-w-md w-full;
+  }
+}
