@@ -6,11 +6,13 @@ export const getAllEvents = createAsyncThunk('event/getAll', async (params, { re
     const cleanParams = {};
     if (params) {
       Object.keys(params).forEach(key => {
-        if (params[key]) cleanParams[key] = params[key];
+        if (params[key] !== undefined && params[key] !== null && params[key] !== '') {
+          cleanParams[key] = params[key];
+        }
       });
     }
     const query = new URLSearchParams(cleanParams).toString();
-    const url = query ? `event/allEvents?${query}` : `event/allEvents`;
+    const url = query ? `/api/event/allEvents?${query}` : `/api/event/allEvents`;
     
     const response = await api.get(url);
     return response.data;
@@ -24,11 +26,13 @@ export const getEventsByUser = createAsyncThunk('event/getByUser', async (params
     const cleanParams = {};
     if (params) {
       Object.keys(params).forEach(key => {
-        if (params[key]) cleanParams[key] = params[key];
+        if (params[key] !== undefined && params[key] !== null && params[key] !== '') {
+          cleanParams[key] = params[key];
+        }
       });
     }
     const query = new URLSearchParams(cleanParams).toString();
-    const url = query ? `event/eventsByUser?${query}` : `event/eventsByUser`;
+    const url = query ? `/api/event/eventsByUser?${query}` : `/api/event/eventsByUser`;
 
     const response = await api.get(url);
     return response.data;
@@ -39,7 +43,7 @@ export const getEventsByUser = createAsyncThunk('event/getByUser', async (params
 
 export const getEventById = createAsyncThunk('event/getById', async (eid, { rejectWithValue }) => {
   try {
-    const response = await api.get(`event/eventById/${eid}`);
+    const response = await api.get(`/api/event/eventById/${eid}`);
     return response.data;
   } catch (error) {
     return rejectWithValue(error.response?.data?.message || 'Failed to fetch event');
@@ -48,7 +52,7 @@ export const getEventById = createAsyncThunk('event/getById', async (eid, { reje
 
 export const createEvent = createAsyncThunk('event/create', async (eventData, { rejectWithValue }) => {
   try {
-    const response = await api.post('event/create', eventData);
+    const response = await api.post('/api/event/create', eventData);
     return response.data;
   } catch (error) {
     return rejectWithValue(error.response?.data?.message || 'Failed to create event');
@@ -59,7 +63,7 @@ export const updateEvent = createAsyncThunk('event/update', async ({ eid, data }
   try {
     const { auth } = getState();
     const isAdmin = auth.user?.role === 'admin';
-    const endpoint = isAdmin ? `event/admin/update/${eid}` : `event/update/${eid}`;
+    const endpoint = isAdmin ? `/api/event/admin/update/${eid}` : `/api/event/update/${eid}`;
     
     const response = await api.put(endpoint, data);
     return response.data;
@@ -70,7 +74,7 @@ export const updateEvent = createAsyncThunk('event/update', async ({ eid, data }
 
 export const deleteEvent = createAsyncThunk('event/delete', async (eid, { rejectWithValue }) => {
   try {
-    const response = await api.delete(`event/delete/${eid}`);
+    const response = await api.delete(`/api/event/delete/${eid}`);
     return eid; // return the id to remove it from state
   } catch (error) {
     return rejectWithValue(error.response?.data?.message || 'Failed to delete event');

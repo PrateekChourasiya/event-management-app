@@ -19,6 +19,31 @@ const Home = () => {
   const [pastPage, setPastPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
 
+  const [userLocation, setUserLocation] = useState({ lat: null, lng: null });
+
+  // Handle Sort Change with Geolocation Prompt
+  const handleSortChange = (newSort) => {
+    if (newSort === 'nearest') {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            setUserLocation({ lat: position.coords.latitude, lng: position.coords.longitude });
+            setSortOrder(newSort);
+          },
+          (error) => {
+            console.error("Error getting location", error);
+            alert("Could not get your location. Please allow location access.");
+            setSortOrder('newest'); // fallback
+          }
+        );
+      } else {
+        alert("Geolocation is not supported by this browser.");
+      }
+    } else {
+      setSortOrder(newSort);
+    }
+  };
+
   // Debounce search term
   useEffect(() => {
     const timerId = setTimeout(() => {
@@ -29,10 +54,16 @@ const Home = () => {
 
   // Fetch events on filter change
   useEffect(() => {
-    dispatch(getAllEvents({ search: debouncedSearch, category: categoryFilter, sort: sortOrder }));
+    dispatch(getAllEvents({ 
+      search: debouncedSearch, 
+      category: categoryFilter, 
+      sort: sortOrder,
+      userLat: userLocation.lat,
+      userLng: userLocation.lng
+    }));
     setUpcomingPage(1);
     setPastPage(1);
-  }, [dispatch, debouncedSearch, categoryFilter, sortOrder]);
+  }, [dispatch, debouncedSearch, categoryFilter, sortOrder, userLocation]);
 
   const now = new Date();
   const upcomingEvents = events.filter(e => new Date(e.startTime) >= now);
@@ -53,7 +84,7 @@ const Home = () => {
         categoryFilter={categoryFilter} 
         setCategoryFilter={setCategoryFilter} 
         sortOrder={sortOrder} 
-        setSortOrder={setSortOrder} 
+        setSortOrder={handleSortChange} 
       />
 
       {loading ? (

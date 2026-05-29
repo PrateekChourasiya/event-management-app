@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:3000/'; // Ensure this matches backend port
+const API_URL = import.meta.env.VITE_BACKEND_URL; // Ensure this matches backend port
 
 // Create axios instance with credentials
 export const api = axios.create({
@@ -13,7 +13,7 @@ export const registerUser = createAsyncThunk(
   'auth/register',
   async (userData, { rejectWithValue }) => {
     try {
-      const response = await api.post('user/register', userData);
+      const response = await api.post('/api/user/register', userData);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Registration failed');
@@ -25,7 +25,7 @@ export const loginUser = createAsyncThunk(
   'auth/login',
   async (userData, { rejectWithValue }) => {
     try {
-      const response = await api.post('user/login', userData);
+      const response = await api.post('/api/user/login', userData);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Login failed');
@@ -37,7 +37,7 @@ export const logoutUser = createAsyncThunk(
   'auth/logout',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await api.post('user/logout');
+      const response = await api.post('/api/user/logout');
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Logout failed');

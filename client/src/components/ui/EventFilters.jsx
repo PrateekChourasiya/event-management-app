@@ -40,6 +40,7 @@ const EventFilters = ({ searchTerm, setSearchTerm, categoryFilter, setCategoryFi
         >
           <option value="newest">LATEST UPCOMING</option>
           <option value="oldest">EARLIEST FIRST</option>
+          <option value="nearest">NEAREST FIRST</option>
         </select>
       </div>
     </div>

@@ -19,8 +19,8 @@ app.get("/test", (req, res) => {
   res.send("Hello from Backend");
 });
 
-app.use("/user", authRouter);
-app.use("/event", eventRouter);
+app.use("/api/user", authRouter);
+app.use("/api/event", eventRouter);
 
 async function initializeConnection() {
   try {

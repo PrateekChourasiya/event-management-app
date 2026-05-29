@@ -23,8 +23,8 @@ const Admin = () => {
   const handleDelete = async (eid) => {
     if (window.confirm("Admin Action: Delete this event globally?")) {
       try {
-        await api.delete(`/event/admin/delete/${eid}`);
-        toast.success("Event deleted globally");
+        await api.delete(`/api/event/admin/delete/${eid}`);
+        toast.success("Event deleted by Admin");
         dispatch(getAllEvents()); // refresh list
       } catch (err) {
         toast.error(err.response?.data?.message || "Failed to delete event");
@@ -36,11 +36,11 @@ const Admin = () => {
     e.preventDefault();
     setIsRegistering(true);
     try {
-      await api.post('/user/admin/register', adminForm);
-      toast.success(`Successfully registered new ${adminForm.role}`);
+      await api.post('/api/user/admin/register', adminForm);
+      toast.success("Admin registered successfully");
       setAdminForm({ userName: '', emailId: '', password: '', role: 'admin' });
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to register user");
+      toast.error(err.response?.data?.message || "Failed to register admin");
     } finally {
       setIsRegistering(false);
     }

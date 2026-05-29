@@ -7,6 +7,7 @@ import { createEvent, updateEvent, getEventById, clearCurrentEvent } from '../st
 import { useNavigate, useParams } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
 import toast from 'react-hot-toast';
+import MapPicker from '../components/ui/MapPicker';
 
 const countWords = (str) => {
   if (!str) return 0;
@@ -39,6 +40,8 @@ const EventForm = () => {
         errorMap: () => ({ message: "Please select a valid category" })
       }),
       venue: z.string().min(3, { message: "Venue is required" }),
+      lat: z.number({ required_error: "Please select a location on the map", invalid_type_error: "Invalid latitude" }),
+      lng: z.number({ required_error: "Please select a location on the map", invalid_type_error: "Invalid longitude" }),
       startTime: z.string().min(1, { message: "Start time is required" }),
       endTime: z.string().min(1, { message: "End time is required" }),
       price: z.coerce.number().min(0, { message: "Price cannot be negative" }),
@@ -80,6 +83,8 @@ const EventForm = () => {
   const watchTitle = watch('title', '');
   const watchDescription = watch('description', '');
   const watchContent = watch('content', '');
+  const lat = watch('lat');
+  const lng = watch('lng');
 
   // Get current local time for min attribute
   const nowISO = new Date().toISOString().slice(0, 16);
@@ -88,13 +93,20 @@ const EventForm = () => {
     if (isEditMode) {
       dispatch(getEventById(eid)).unwrap().then(res => {
         const event = res.data.event;
+        if (!event) {
+          toast.error("Event not found");
+          navigate('/profile');
+          return;
+        }
         reset({
           ...event,
           startTime: new Date(event.startTime).toISOString().slice(0,16),
           endTime: new Date(event.endTime).toISOString().slice(0,16),
+          lat: event.location?.coordinates?.[1],
+          lng: event.location?.coordinates?.[0],
         });
-      }).catch(() => {
-        toast.error("Failed to load event");
+      }).catch((err) => {
+        toast.error(err || "Failed to load event");
         navigate('/profile');
       });
     }
@@ -167,9 +179,21 @@ const EventForm = () => {
             </div>
 
             <div>
-              <label className="block font-bold text-retro-light mb-2">VENUE / LOCATION</label>
-              <input type="text" {...register('venue')} className="retro-input" placeholder="City Hall" />
+              <label className="block font-bold text-retro-light mb-2">VENUE (Address / Name)</label>
+              <input type="text" {...register('venue')} className="retro-input" placeholder="Madison Square Garden" />
               {errors.venue && <p className="text-retro-error text-sm mt-1">{errors.venue.message}</p>}
+            </div>
+
+            <div className="col-span-1 md:col-span-2">
+              <label className="block font-bold text-retro-light mb-2">MAP LOCATION (Click to place pin)</label>
+              <MapPicker 
+                initialPosition={(lat && lng) ? [lat, lng] : null} 
+                onLocationSelected={(latitude, longitude) => {
+                  setValue('lat', latitude, { shouldValidate: true });
+                  setValue('lng', longitude, { shouldValidate: true });
+                }} 
+              />
+              {(errors.lat || errors.lng) && <p className="text-retro-error text-sm mt-1">Please drop a pin on the map to set the exact venue location.</p>}
             </div>
 
             <div>

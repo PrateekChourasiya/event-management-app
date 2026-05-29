@@ -4,10 +4,10 @@ const User = require('../models/user');
 const createEvent = async(req, res) => {
     try{
         const user = req.result;
-        const {title, description, content, category, venue, startTime, endTime, price, isFree} = req.body;
+        const {title, description, content, category, venue, startTime, endTime, price, isFree, lat, lng} = req.body;
 
-        if(!title || !description || !content || !category || !venue || !startTime || !endTime || !typeof(price)){
-            return res.status(400).send("All fields are required.");
+        if(!title || !description || !content || !category || !venue || !startTime || !endTime || !typeof(price) || lat === undefined || lng === undefined){
+            return res.status(400).send("All fields including location coordinates are required.");
         }
 
         const event = await Event.create({
@@ -21,6 +21,10 @@ const createEvent = async(req, res) => {
             price,
             isFree,
             organizerId: user._id,
+            location: {
+                type: 'Point',
+                coordinates: [parseFloat(lng), parseFloat(lat)]
+            }
         });
 
         user.eventsOrganised.push(event._id);
@@ -60,7 +64,7 @@ const createEvent = async(req, res) => {
 const updateEvent = async(req, res) => {
     try{
         const {eid} = req.params;
-        const {title, description, content, category, venue, startTime, endTime, price, isFree} = req.body;
+        const {title, description, content, category, venue, startTime, endTime, price, isFree, lat, lng} = req.body;
         const user = req.result;
 
         if(!eid) return res.status(400).send("Invalid Event ID");
@@ -81,6 +85,12 @@ const updateEvent = async(req, res) => {
         if(endTime) event.endTime = endTime;
         if(price !== undefined) event.price = price;
         if(isFree !== undefined) event.isFree = isFree;
+        if(lat !== undefined && lng !== undefined) {
+            event.location = {
+                type: 'Point',
+                coordinates: [parseFloat(lng), parseFloat(lat)]
+            };
+        }
 
         await event.save();
 
@@ -117,7 +127,7 @@ const updateEvent = async(req, res) => {
 const adminUpdateEvent = async(req, res) => {
     try{
         const {eid} = req.params;
-        const {title, description, content, category, venue, startTime, endTime, price, isFree} = req.body;
+        const {title, description, content, category, venue, startTime, endTime, price, isFree, lat, lng} = req.body;
 
         if(!eid) return res.status(400).send("Invalid Event ID");
 
@@ -134,6 +144,12 @@ const adminUpdateEvent = async(req, res) => {
         if(endTime) event.endTime = endTime;
         if(price !== undefined) event.price = price;
         if(isFree !== undefined) event.isFree = isFree;
+        if(lat !== undefined && lng !== undefined) {
+            event.location = {
+                type: 'Point',
+                coordinates: [parseFloat(lng), parseFloat(lat)]
+            };
+        }
 
         await event.save();
 
@@ -222,7 +238,7 @@ const adminDeleteEvent = async(req, res) => {
 
 const getAllEvents = async(req, res) => {
     try{
-        const { search, category, sort } = req.query;
+        const { search, category, sort, userLat, userLng } = req.query;
         let query = {};
 
         if (search) {
@@ -238,16 +254,27 @@ const getAllEvents = async(req, res) => {
             query.category = category;
         }
 
-        let sortOption = {};
+        let sortOption = null;
         if (sort === 'oldest') {
             sortOption = { startTime: 1 }; // oldest first
+        } else if (sort === 'nearest' && userLat && userLng) {
+            query.location = {
+                $near: {
+                    $geometry: {
+                        type: "Point",
+                        coordinates: [parseFloat(userLng), parseFloat(userLat)]
+                    }
+                }
+            };
         } else {
-            sortOption = { startTime: -1 }; // newest first
+            sortOption = { startTime: -1 }; // newest first (default)
         }
 
-        const events = await Event.find(query)
-            .sort(sortOption)
-            .select("_id title description content category venue startTime endTime price isFree organizerId");
+        let dbQuery = Event.find(query).select("_id title description content category venue startTime endTime price isFree organizerId location");
+        if (sortOption) {
+            dbQuery = dbQuery.sort(sortOption);
+        }
+        const events = await dbQuery;
             
         res.status(200).json({
             success: true,
@@ -270,8 +297,7 @@ const eventById = async(req, res) => {
         const {eid} = req.params;
         if(!eid) return res.status(400).send("Invalid Event ID");
 
-        const event = await Event.findById(eid).select("_id title description content category venue startTime endTime price isFree organizerId");
-        if(!event) return res.status(404).send("Event not found");
+        const event = await Event.findById(eid);
 
         res.status(200).json({
             success: true,
@@ -292,7 +318,7 @@ const eventById = async(req, res) => {
 const eventsByUser = async(req, res) => {
     try{
         const user = req.result;
-        const { search, category, sort } = req.query;
+        const { search, category, sort, userLat, userLng } = req.query;
         
         let query = { organizerId: user._id };
 
@@ -309,16 +335,27 @@ const eventsByUser = async(req, res) => {
             query.category = category;
         }
 
-        let sortOption = {};
+        let sortOption = null;
         if (sort === 'oldest') {
             sortOption = { startTime: 1 };
+        } else if (sort === 'nearest' && userLat && userLng) {
+            query.location = {
+                $near: {
+                    $geometry: {
+                        type: "Point",
+                        coordinates: [parseFloat(userLng), parseFloat(userLat)]
+                    }
+                }
+            };
         } else {
             sortOption = { startTime: -1 };
         }
 
-        const events = await Event.find(query)
-            .sort(sortOption)
-            .select("_id title description content category venue startTime endTime price isFree organizerId");
+        let dbQuery = Event.find(query).select("_id title description content category venue startTime endTime price isFree organizerId location");
+        if (sortOption) {
+            dbQuery = dbQuery.sort(sortOption);
+        }
+        const events = await dbQuery;
 
         if(!events) return res.status(404).send("Events not found");
         
