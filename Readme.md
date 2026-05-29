@@ -96,3 +96,8 @@ The client application will typically become accessible at `http://localhost:517
 - **Local Environment:** It is assumed that Node.js and MongoDB (either a local instance or a cloud Atlas cluster) are installed and accessible by the backend server.
 - **Authentication Flow:** It is assumed that user roles (e.g., ADMIN vs USER) are correctly established during the registration process and strictly validated via JWT tokens on all protected backend routes.
 - **Port Availability:** It is assumed that default ports 5000 (for the Express server) and 5173 (for the Vite client) are available and not blocked on the host machine.
+
+Video Demo - https://drive.google.com/file/d/1GUbtLJjOBJp5_9QqkOPG3j5g4QbSQuse/view?usp=drive_link
+
+
+
