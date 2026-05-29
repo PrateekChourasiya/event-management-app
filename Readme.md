@@ -97,7 +97,16 @@ The client application will typically become accessible at `http://localhost:517
 - **Authentication Flow:** It is assumed that user roles (e.g., ADMIN vs USER) are correctly established during the registration process and strictly validated via JWT tokens on all protected backend routes.
 - **Port Availability:** It is assumed that default ports 5000 (for the Express server) and 5173 (for the Vite client) are available and not blocked on the host machine.
 
-Video Demo - https://drive.google.com/file/d/1GUbtLJjOBJp5_9QqkOPG3j5g4QbSQuse/view?usp=drive_link
+
+## 🌟 Additional Features
+
+- **Debouncing in Search:** Optimized search functionality with debouncing after every 500ms the moment user stops typing to minimize unnecessary API calls while typing, enhancing performance.
+- **Pagination at Multiple Places:** Implemented robust pagination across event feeds and dashboards to manage large datasets and ensure fast load times.
+- **Deployed on Render:** Fully configured and deployed on Render for reliable cloud hosting. (https://event-management-app-9ttz.onrender.com)
+- **Map Feature using Leaflet:** Integrated React Leaflet to display interactive maps, allowing users to pinpoint and explore event locations.
+- **Global Rate Limiting:** Secured backend APIs using `express-rate-limit` to prevent brute-force attacks and abuse.
+- **Calendar View:** A custom retro-themed calendar interface on the homepage for intuitive date-based event discovery and filtering.
+- **Role-Based Access Control:** Secure access levels differentiating standard users and administrators for platform integrity.
 
 
-
+Video Demo - https://drive.google.com/file/d/1Hs8HthFyyVPrphvEIel_PkAR43JNKhmo/view?usp=drivesdk
