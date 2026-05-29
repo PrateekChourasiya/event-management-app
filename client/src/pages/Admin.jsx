@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { getAllEvents } from '../store/eventSlice';
+import { getAllEvents, updateEvent } from '../store/eventSlice';
 import { api } from '../store/authSlice';
 import MainLayout from '../components/layout/MainLayout';
 import { Link, useNavigate } from 'react-router-dom';
@@ -28,6 +28,22 @@ const Admin = () => {
         dispatch(getAllEvents()); // refresh list
       } catch (err) {
         toast.error(err.response?.data?.message || "Failed to delete event");
+      }
+    }
+  };
+
+  const handleCancel = async (eid) => {
+    if (window.confirm("Admin Action: Cancel this event? It will be removed from public feeds.")) {
+      try {
+        const res = await dispatch(updateEvent({ eid, data: { isCancelled: true } }));
+        if (updateEvent.fulfilled.match(res)) {
+          toast.success("Event cancelled successfully");
+          dispatch(getAllEvents()); // refresh list to show updated status
+        } else {
+          toast.error(res.payload || "Failed to cancel event");
+        }
+      } catch (err) {
+        toast.error("Unexpected error occurred");
       }
     }
   };
@@ -78,7 +94,11 @@ const Admin = () => {
               {events.map(event => (
                 <div key={event._id} className="border border-gray-200 p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:bg-gray-50">
                   <div className="flex-1">
-                    <h4 className="font-bold text-lg text-retro-light">{event.title}</h4>
+                    <h4 className="font-bold text-lg text-retro-light">
+                      {event.title}
+                      {event.isCancelled && <span className="ml-2 text-sm text-retro-error">[CANCELLED]</span>}
+                      {event.isCompleted && !event.isCancelled && <span className="ml-2 text-sm text-green-500">[COMPLETED]</span>}
+                    </h4>
                     <p className="text-sm text-gray-500">ID: {event._id}</p>
                     <p className="text-sm text-gray-500">Organizer ID: {event.organizerId}</p>
                   </div>
@@ -89,6 +109,17 @@ const Admin = () => {
                       className="flex-1 sm:flex-none border-2 border-retro-light px-4 py-2 text-xs font-bold text-retro-light bg-retro-brown hover:bg-gray-200"
                     >
                       UPDATE EVENT
+                    </button>
+                    <button 
+                      onClick={() => handleCancel(event._id)}
+                      disabled={event.isCancelled || event.isCompleted}
+                      className={`flex-1 sm:flex-none border-2 px-4 py-2 text-xs font-bold ${
+                        event.isCancelled || event.isCompleted
+                        ? 'border-gray-400 text-gray-400 bg-gray-100 cursor-not-allowed'
+                        : 'border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white'
+                      }`}
+                    >
+                      CANCEL EVENT
                     </button>
                     <button 
                       onClick={() => handleDelete(event._id)}

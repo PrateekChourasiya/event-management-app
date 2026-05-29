@@ -1,204 +1,110 @@
-const express = require('express');
 const User = require('../models/user');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const AppError = require('../utils/AppError');
 
-const validate = require('../utils/validate');
+const register = async (req, res, next) => {
+    try {
+        const { userName, emailId, password } = req.body;
 
-const register = async(req, res) => {
-    try{
-        validate(req.body);
-        const {userName, emailId, password} = req.body;
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const user = await User.create({ userName, emailId, password: hashedPassword, role: 'user' });
 
-        req.body.password = await bcrypt.hash(password, 10);
-        req.body.role = 'user';
+        const token = jwt.sign({ _id: user._id, emailId, role: 'user' }, process.env.JWT_KEY, { expiresIn: 60 * 60 });
 
-        const user = await User.create(req.body);
-
-        const token = jwt.sign({_id: user._id, emailId: emailId, role:'user'}, process.env.JWT_KEY, {expiresIn: 60*60}); // expiresIn takes time in seconds, so we gave 1 hr
-
-        const reply = {
-            userName: user.userName,
-            emailId: user.emailId,
-            _id: user._id,
-            role: user.role,
-        };
-
-        res.cookie('token', token, {
-            maxAge: 60*60*1000
-        }); // here maxAge takes time in miliseconds, so we gave time accordingly
+        res.cookie('token', token, { maxAge: 60 * 60 * 1000 });
         res.status(201).json({
             success: true,
-            message: "User registered successfully.",
+            message: 'User registered successfully.',
             data: {
-                user: reply,
+                user: { _id: user._id, userName: user.userName, emailId: user.emailId, role: user.role }
             }
         });
-
-    } catch(err){
-        res.status(400).json({
-            success: false,
-            message: "Error: " + err
-        });
+    } catch (err) {
+        next(err);
     }
-}
+};
 
-const login = async(req, res) => {
-    try{
-        const {emailId, password} = req.body;
+const login = async (req, res, next) => {
+    try {
+        const { emailId, password } = req.body;
 
-        if(!emailId){
-            throw new Error("Invalid Credentials");
-        }
-        if(!password){
-            throw new Error("Invalid Credentials");
-        }
-
-        const user = await User.findOne({emailId});
-
-        if(!user){
-            throw new Error("Invalid Credentials");
-        }
+        const user = await User.findOne({ emailId });
+        if (!user) return next(new AppError('Invalid credentials', 401));
 
         const match = await bcrypt.compare(password, user.password);
+        if (!match) return next(new AppError('Invalid credentials', 401));
 
-        if(!match){
-            throw new Error("Invalid Credentials");
-        }
+        const token = jwt.sign({ _id: user._id, emailId, role: user.role }, process.env.JWT_KEY, { expiresIn: 60 * 60 });
+        res.cookie('token', token, { maxAge: 60 * 60 * 1000 });
 
-        const reply = {
-            userName: user.userName,
-            emailId: user.emailId,
-            _id: user._id,
-            role: user.role,
-        };
-
-        const token = jwt.sign({_id: user._id, emailId: emailId, role:user.role}, process.env.JWT_KEY, {expiresIn: 60*60});
-        res.cookie('token', token, {
-            maxAge: 60*60*1000           
-        });
-
-        res.status(201).json({
+        res.status(200).json({
             success: true,
-            message: "User logged in successfully.",
+            message: 'User logged in successfully.',
             data: {
-                user: reply,
+                user: { _id: user._id, userName: user.userName, emailId: user.emailId, role: user.role }
             }
         });
-    } catch(err){
-        res.status(400).json({
-            success: false,
-            message: "Error: " + err
-        });
+    } catch (err) {
+        next(err);
     }
-}
+};
 
-const logout = async(req, res) => {
-    try{
-        const {token} = req.cookies;
-
-        const payload = jwt.decode(token);
-        
-        // delete the cookies
-        res.cookie("token", "", {
-            expires: new Date(0)
-        });        
-        res.status(201).json({
+const logout = async (req, res, next) => {
+    try {
+        res.cookie('token', '', { expires: new Date(0) });
+        res.status(200).json({
             success: true,
-            message: "User logged out successfully.",
+            message: 'User logged out successfully.'
         });
-
-    } catch(err){
-       res.status(503).json({
-            success: false,
-            message: "Error: " + err
-        });
+    } catch (err) {
+        next(err);
     }
-}
+};
 
-const adminRegister = async(req, res) => {
-    try{
-        // validate the user data first,
-        validate(req.body);
+const adminRegister = async (req, res, next) => {
+    try {
+        const { userName, emailId, password, role } = req.body;
 
-        const {emailId, password, role} = req.body;
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const user = await User.create({ userName, emailId, password: hashedPassword, role: role || 'admin' });
 
-        req.body.password = await bcrypt.hash(password, 10);
-        req.body.role = role;
-
-        const user = await User.create(req.body);
-
-        const reply = {
-            userName: user.userName,
-            emailId: user.emailId,
-            _id: user._id,
-            role: user.role,
-        };
-
-        const token = jwt.sign({_id: user._id, emailId: emailId, role:user.role}, process.env.JWT_KEY, {expiresIn: 60*60}); // expiresIn takes time in seconds, so we gave 1 hr
-        res.cookie('token', token, {
-            maxAge: 60*60*1000,           
-        }); // here maxAge takes time in miliseconds, so we gave time accordingly
+        const token = jwt.sign({ _id: user._id, emailId, role: user.role }, process.env.JWT_KEY, { expiresIn: 60 * 60 });
+        res.cookie('token', token, { maxAge: 60 * 60 * 1000 });
 
         res.status(201).json({
             success: true,
-            message: "User registered by admin successfully.",
+            message: 'User registered by admin successfully.',
             data: {
-                user: reply,
+                user: { _id: user._id, userName: user.userName, emailId: user.emailId, role: user.role }
             }
         });
+    } catch (err) {
+        next(err);
     }
-    catch(err){
-        res.status(401).json({
-            success: false,
-            message: "Error: " + err
-        });
-    }
-}
+};
 
-const deleteProfile = async(req, res) => {
-    try{
+const deleteProfile = async (req, res, next) => {
+    try {
         const userId = req.result._id;
-
-        // delete user from the user schema
         await User.findByIdAndDelete(userId);
-
-        res.status(200).json({
-            success: true,
-            message: "User Deleted Successfully."
-        });
+        res.status(200).json({ success: true, message: 'User deleted successfully.' });
+    } catch (err) {
+        next(err);
     }
-    catch(err){
-        res.status(500).json({
-            success: false,
-            message: "Error: " + err
-        });
+};
+
+const getProfile = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+
+        const profile = await User.findById(id).select('_id userName emailId role eventsOrganised eventsAttended eventsOrganisedCount eventsAttendedCount');
+        if (!profile) return next(new AppError('User not found', 404));
+
+        res.status(200).json({ success: true, data: { profile } });
+    } catch (err) {
+        next(err);
     }
-}
+};
 
-const getProfile = async(req, res) => {
-    try{
-        const {id} = req.params;
-
-        if(!id) return res.status(400).send("ID is Invalid/Missing");
-
-        const profile = await User.findById(id).select("_id userName emailId role eventsOrganised eventsAttended eventsOrganisedCount eventsAttendedCount");
-
-        if(!profile) return res.status(400).send("User is Invalid/Missing");
-
-        res.status(200).json({
-            success: true,
-            data: {
-                profile
-            }
-        });
-
-    } catch(err){
-        res.status(400).json({
-            success: false,
-            message: "Error: " + err
-        });
-    }
-}
-
-module.exports = {register, login, logout, adminRegister, deleteProfile, getProfile}
+module.exports = { register, login, logout, adminRegister, deleteProfile, getProfile };

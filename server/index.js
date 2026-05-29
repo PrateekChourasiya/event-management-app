@@ -1,11 +1,12 @@
 const express = require("express");
 const cookieParser = require("cookie-parser");
-const path = require('path')
+const path = require('path');
 const cors = require('cors');
 require("dotenv").config();
 const main = require("./config/db");
 const authRouter = require("./routes/authRoutes");
 const eventRouter = require("./routes/eventRoutes");
+const errorHandler = require("./middleware/errorMiddleware");
 const app = express();
 
 app.use(cors({
@@ -24,6 +25,10 @@ app.get("/test", (req, res) => {
 app.use("/api/user", authRouter);
 app.use("/api/event", eventRouter);
 
+// Global error handler — must be registered AFTER all routes
+app.use(errorHandler);
+
+// Serve React for all non-API routes (SPA fallback)
 app.use((req, res) => {
     res.sendFile(path.join(__dirname, "dist", "index.html"))
 })

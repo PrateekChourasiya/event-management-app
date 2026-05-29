@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { getEventsByUser, deleteEvent } from '../store/eventSlice';
+import { getEventsByUser, deleteEvent, updateEvent } from '../store/eventSlice';
 import MainLayout from '../components/layout/MainLayout';
 import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -35,10 +35,25 @@ const Profile = () => {
   }, [dispatch, debouncedSearch, categoryFilter, sortOrder]);
 
   const handleDelete = async (eid) => {
-    if (window.confirm("Are you sure you want to cancel this event? This cannot be undone.")) {
+    if (window.confirm("Are you sure you want to completely delete this event? This cannot be undone.")) {
       try {
         const res = await dispatch(deleteEvent(eid));
         if (deleteEvent.fulfilled.match(res)) {
+          toast.success("Event deleted successfully");
+        } else {
+          toast.error(res.payload || "Failed to delete event");
+        }
+      } catch (err) {
+        toast.error("Unexpected error occurred");
+      }
+    }
+  };
+
+  const handleCancel = async (eid) => {
+    if (window.confirm("Are you sure you want to cancel this event? It will be removed from the public feed.")) {
+      try {
+        const res = await dispatch(updateEvent({ eid, data: { isCancelled: true } }));
+        if (updateEvent.fulfilled.match(res)) {
           toast.success("Event cancelled successfully");
         } else {
           toast.error(res.payload || "Failed to cancel event");
@@ -102,6 +117,8 @@ const Profile = () => {
                   </Link>
                   <p className="text-sm font-bold text-gray-500">
                     {new Date(event.startTime).toLocaleDateString()} &bull; {event.venue}
+                    {event.isCancelled && <span className="ml-2 text-retro-error"> [CANCELLED]</span>}
+                    {event.isCompleted && !event.isCancelled && <span className="ml-2 text-green-500"> [COMPLETED]</span>}
                   </p>
                 </div>
                 
@@ -113,10 +130,21 @@ const Profile = () => {
                     UPDATE
                   </button>
                   <button 
+                    onClick={() => handleCancel(event._id)}
+                    disabled={event.isCancelled || event.isCompleted}
+                    className={`flex-1 sm:flex-none border-2 px-4 py-2 text-xs font-retro transition-all ${
+                      event.isCancelled || event.isCompleted 
+                      ? 'border-gray-400 text-gray-400 bg-gray-100 cursor-not-allowed' 
+                      : 'border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white shadow-[2px_2px_0_#f97316] active:translate-y-[1px] active:translate-x-[1px] active:shadow-none'
+                    }`}
+                  >
+                    CANCEL
+                  </button>
+                  <button 
                     onClick={() => handleDelete(event._id)}
                     className="flex-1 sm:flex-none border-2 border-retro-error px-4 py-2 text-xs font-retro text-retro-error hover:bg-retro-error hover:text-white shadow-[2px_2px_0_#ef4444] active:translate-y-[1px] active:translate-x-[1px] active:shadow-none transition-all"
                   >
-                    CANCEL
+                    DELETE
                   </button>
                 </div>
               </div>
