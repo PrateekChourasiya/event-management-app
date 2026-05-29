@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_BACKEND_URL; // Ensure this matches backend port
+const API_URL = import.meta.env.VITE_BACKEND_URL ? import.meta.env.VITE_BACKEND_URL : ""; // Ensure this matches backend port
 
 // Create axios instance with credentials
 export const api = axios.create({

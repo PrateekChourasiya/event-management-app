@@ -1,5 +1,6 @@
 const express = require("express");
 const cookieParser = require("cookie-parser");
+const path = require('path')
 const cors = require('cors');
 require("dotenv").config();
 const main = require("./config/db");
@@ -23,7 +24,7 @@ app.get("/test", (req, res) => {
 app.use("/api/user", authRouter);
 app.use("/api/event", eventRouter);
 
-app.use('*', (req, res) => {
+app.use((req, res) => {
     res.sendFile(path.join(__dirname, "dist", "index.html"))
 })
 
