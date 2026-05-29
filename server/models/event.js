@@ -22,8 +22,8 @@ const eventSchema = new Schema(
         },
         category: {
             type: String,
-            enum : ["tech", "music", "sports", "food", "entertainment", "art", "fashion", "meeting", "party", "work", "others"],
-            default: "others",
+            enum : ["Music", "Technology", "Business", "Sports", "Arts", "Education", "Food", "Other"],
+            default: "Other",
             required : true
         },
         organizerId: {

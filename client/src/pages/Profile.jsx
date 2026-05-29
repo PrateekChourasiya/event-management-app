@@ -1,9 +1,11 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { getEventsByUser, deleteEvent } from '../store/eventSlice';
 import MainLayout from '../components/layout/MainLayout';
 import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import EventFilters from '../components/ui/EventFilters';
+import Pagination from '../components/ui/Pagination';
 
 const Profile = () => {
   const dispatch = useDispatch();
@@ -11,9 +13,26 @@ const Profile = () => {
   const { user } = useSelector(state => state.auth);
   const { userEvents, loading } = useSelector(state => state.event);
 
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [sortOrder, setSortOrder] = useState('newest');
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
+
+  // Debounce search term
   useEffect(() => {
-    dispatch(getEventsByUser());
-  }, [dispatch]);
+    const timerId = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+    }, 500);
+    return () => clearTimeout(timerId);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    dispatch(getEventsByUser({ search: debouncedSearch, category: categoryFilter, sort: sortOrder }));
+    setCurrentPage(1);
+  }, [dispatch, debouncedSearch, categoryFilter, sortOrder]);
 
   const handleDelete = async (eid) => {
     if (window.confirm("Are you sure you want to cancel this event? This cannot be undone.")) {
@@ -58,15 +77,24 @@ const Profile = () => {
           </Link>
         </div>
 
+        <EventFilters 
+          searchTerm={searchTerm} 
+          setSearchTerm={setSearchTerm} 
+          categoryFilter={categoryFilter} 
+          setCategoryFilter={setCategoryFilter} 
+          sortOrder={sortOrder} 
+          setSortOrder={setSortOrder} 
+        />
+
         {loading ? (
           <div className="text-center py-10 animate-pulse font-retro">LOADING EVENTS...</div>
         ) : userEvents.length === 0 ? (
           <div className="text-center py-10 border-2 border-dashed border-gray-300 bg-white">
-            <p className="font-bold text-gray-500 mb-4">You haven't organized any events yet.</p>
+            <p className="font-bold text-gray-500 mb-4">NO EVENTS FOUND MATCHING YOUR CRITERIA.</p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {userEvents.map(event => (
+          <div className="space-y-4 pb-12">
+            {userEvents.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map(event => (
               <div key={event._id} className="bg-white border-2 border-retro-light p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:shadow-[4px_4px_0px_rgba(33,37,41,1)] transition-all">
                 <div className="flex-1">
                   <Link to={`/event/${event._id}`} className="hover:underline decoration-dashed decoration-2 underline-offset-4">
@@ -93,6 +121,12 @@ const Profile = () => {
                 </div>
               </div>
             ))}
+            <Pagination 
+                currentPage={currentPage} 
+                totalItems={userEvents.length} 
+                itemsPerPage={ITEMS_PER_PAGE} 
+                onPageChange={setCurrentPage} 
+              />
           </div>
         )}
       </div>

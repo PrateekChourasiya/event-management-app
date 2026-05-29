@@ -35,7 +35,9 @@ const EventForm = () => {
       content: z.string()
         .min(10, { message: "Content must be at least 10 chars" })
         .refine(val => countWords(val) <= MAX_CONTENT_WORDS, { message: `Content must be max ${MAX_CONTENT_WORDS} words` }),
-      category: z.string().min(2, { message: "Category is required" }),
+      category: z.enum(["Music", "Technology", "Business", "Sports", "Arts", "Education", "Food", "Other"], {
+        errorMap: () => ({ message: "Please select a valid category" })
+      }),
       venue: z.string().min(3, { message: "Venue is required" }),
       startTime: z.string().min(1, { message: "Start time is required" }),
       endTime: z.string().min(1, { message: "End time is required" }),
@@ -150,7 +152,17 @@ const EventForm = () => {
 
             <div>
               <label className="block font-bold text-retro-light mb-2">CATEGORY</label>
-              <input type="text" {...register('category')} className="retro-input" placeholder="Technology" />
+              <select {...register('category')} className="retro-input bg-white cursor-pointer font-bold">
+                <option value="">SELECT A CATEGORY</option>
+                <option value="Music">MUSIC</option>
+                <option value="Technology">TECHNOLOGY</option>
+                <option value="Business">BUSINESS</option>
+                <option value="Sports">SPORTS</option>
+                <option value="Arts">ARTS</option>
+                <option value="Education">EDUCATION</option>
+                <option value="Food">FOOD & DRINK</option>
+                <option value="Other">OTHER</option>
+              </select>
               {errors.category && <p className="text-retro-error text-sm mt-1">{errors.category.message}</p>}
             </div>
 

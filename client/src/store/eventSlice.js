@@ -1,19 +1,36 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { api } from './authSlice'; // re-use the configured axios instance
 
-export const getAllEvents = createAsyncThunk('event/getAll', async (_, { rejectWithValue }) => {
+export const getAllEvents = createAsyncThunk('event/getAll', async (params, { rejectWithValue }) => {
   try {
-    const response = await api.get('/event/allEvents');
+    const cleanParams = {};
+    if (params) {
+      Object.keys(params).forEach(key => {
+        if (params[key]) cleanParams[key] = params[key];
+      });
+    }
+    const query = new URLSearchParams(cleanParams).toString();
+    const url = query ? `event/allEvents?${query}` : `event/allEvents`;
+    
+    const response = await api.get(url);
     return response.data;
   } catch (error) {
     return rejectWithValue(error.response?.data?.message || 'Failed to fetch events');
   }
 });
 
-export const getEventsByUser = createAsyncThunk('event/getByUser', async (_, { rejectWithValue }) => {
+export const getEventsByUser = createAsyncThunk('event/getByUser', async (params, { rejectWithValue }) => {
   try {
-    const response = await api.get('event/eventsByUser');
-    console.log(response.data.data.events);
+    const cleanParams = {};
+    if (params) {
+      Object.keys(params).forEach(key => {
+        if (params[key]) cleanParams[key] = params[key];
+      });
+    }
+    const query = new URLSearchParams(cleanParams).toString();
+    const url = query ? `event/eventsByUser?${query}` : `event/eventsByUser`;
+
+    const response = await api.get(url);
     return response.data;
   } catch (error) {
     return rejectWithValue(error.response?.data?.message || 'Failed to fetch user events');

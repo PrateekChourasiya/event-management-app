@@ -222,7 +222,33 @@ const adminDeleteEvent = async(req, res) => {
 
 const getAllEvents = async(req, res) => {
     try{
-        const events = await Event.find().select("_id title description content category venue startTime endTime price isFree organizerId");
+        const { search, category, sort } = req.query;
+        let query = {};
+
+        if (search) {
+            query.$or = [
+                { title: { $regex: search, $options: 'i' } },
+                { description: { $regex: search, $options: 'i' } },
+                { content: { $regex: search, $options: 'i' } },
+                { venue: { $regex: search, $options: 'i' } }
+            ];
+        }
+
+        if (category) {
+            query.category = category;
+        }
+
+        let sortOption = {};
+        if (sort === 'oldest') {
+            sortOption = { startTime: 1 }; // oldest first
+        } else {
+            sortOption = { startTime: -1 }; // newest first
+        }
+
+        const events = await Event.find(query)
+            .sort(sortOption)
+            .select("_id title description content category venue startTime endTime price isFree organizerId");
+            
         res.status(200).json({
             success: true,
             message: "Events fetched successfully.",
@@ -266,7 +292,33 @@ const eventById = async(req, res) => {
 const eventsByUser = async(req, res) => {
     try{
         const user = req.result;
-        const events = await Event.find({organizerId: user._id}).select("_id title description content category venue startTime endTime price isFree organizerId");
+        const { search, category, sort } = req.query;
+        
+        let query = { organizerId: user._id };
+
+        if (search) {
+            query.$or = [
+                { title: { $regex: search, $options: 'i' } },
+                { description: { $regex: search, $options: 'i' } },
+                { content: { $regex: search, $options: 'i' } },
+                { venue: { $regex: search, $options: 'i' } }
+            ];
+        }
+
+        if (category) {
+            query.category = category;
+        }
+
+        let sortOption = {};
+        if (sort === 'oldest') {
+            sortOption = { startTime: 1 };
+        } else {
+            sortOption = { startTime: -1 };
+        }
+
+        const events = await Event.find(query)
+            .sort(sortOption)
+            .select("_id title description content category venue startTime endTime price isFree organizerId");
 
         if(!events) return res.status(404).send("Events not found");
         
