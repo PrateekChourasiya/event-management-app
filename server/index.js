@@ -7,7 +7,11 @@ const main = require("./config/db");
 const authRouter = require("./routes/authRoutes");
 const eventRouter = require("./routes/eventRoutes");
 const errorHandler = require("./middleware/errorMiddleware");
+const apiLimiter = require("./middleware/rateLimiter");
 const app = express();
+
+// Trust the reverse proxy (Render, Heroku, etc.) so rate limiting identifies IPs correctly
+app.set('trust proxy', 1);
 
 app.use(cors({
     origin: 'http://localhost:5173', // Vite default port
@@ -21,6 +25,9 @@ app.use(express.static(path.join(__dirname, 'dist')))
 app.get("/test", (req, res) => {
   res.send("Hello from Backend");
 });
+
+// Apply rate limiting to all /api routes globally
+app.use("/api", apiLimiter);
 
 app.use("/api/user", authRouter);
 app.use("/api/event", eventRouter);
